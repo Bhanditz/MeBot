@@ -104,7 +104,7 @@ class MeBot(sleekxmpp.ClientXMPP):
 			return
 		if msg['body'][0] == '!':
 			self.parse(msg)
-		elif msg['body'].split()[0] in self.qwords \
+		elif msg['body'].split()[0].lower() in self.qwords \
 				or msg['body'][-1] == '?' \
 				or self.user().force[str(msg['from']).split('/')[0]]:
 			self.assist(msg)
@@ -118,8 +118,11 @@ class MeBot(sleekxmpp.ClientXMPP):
 			return
 		try:
 			self.commands[msg['body'].split()[0]](msg)
-		except KeyError:
-			self.error(msg)
+		except KeyError as e:
+			if str(e)[:2] == '\'!':
+				self.error(msg)
+			else:
+				raise
 
 	def error(self, msg):
 		self.message("%s, please use a valid command. Try !h." % msg['from'], msg)
@@ -195,7 +198,7 @@ class MeBot(sleekxmpp.ClientXMPP):
 
 	def assist(self, msg):
 		if self.user().active[str(msg['from']).split('/')[0]]:
-			self.search(msg, msg['body'])
+			self.search(msg, 'google', msg['body'])
 
 	def search(self, msg, stype, query):
 		self.message(self.searches[stype].search(query), msg)
@@ -213,8 +216,8 @@ class MeBot(sleekxmpp.ClientXMPP):
 		try:
 			i = int(second)
 			self.message(self.searches[last].details(i - 1), msg)
-		except:
-			self.message('Specify an integer 1 - 10, "all", or nothing.', msg)
+		except ValueError:
+			self.message('Specify an integer, "all", or nothing.', msg)
 
 
 class Setup:
